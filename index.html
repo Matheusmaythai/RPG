@@ -1,0 +1,848 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Reino de Aether</title>
+
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: #10131a;
+      color: white;
+    }
+
+    .game {
+      max-width: 900px;
+      margin: auto;
+      padding: 20px;
+    }
+
+    h1 {
+      text-align: center;
+      color: #ffd54a;
+    }
+
+    .subtitle {
+      text-align: center;
+      color: #aaa;
+    }
+
+    .cards {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 15px;
+      margin-top: 20px;
+    }
+
+    .card {
+      background: #1b202b;
+      border: 1px solid #343b4b;
+      border-radius: 15px;
+      padding: 20px;
+    }
+
+    .enemy {
+      border-left: 5px solid #e53935;
+    }
+
+    .player {
+      border-left: 5px solid #4caf50;
+    }
+
+    .bar {
+      width: 100%;
+      height: 18px;
+      background: #303541;
+      border-radius: 20px;
+      overflow: hidden;
+      margin: 8px 0 15px;
+    }
+
+    .bar-fill {
+      height: 100%;
+      transition: width 0.3s;
+    }
+
+    #hpBar {
+      background: #4caf50;
+      width: 100%;
+    }
+
+    #enemyBar {
+      background: #e53935;
+      width: 100%;
+    }
+
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 10px;
+    }
+
+    .stat {
+      background: #252b38;
+      padding: 12px;
+      border-radius: 10px;
+    }
+
+    .actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 20px;
+    }
+
+    button {
+      flex: 1;
+      min-width: 150px;
+      padding: 14px;
+      border: none;
+      border-radius: 10px;
+      background: #292f3c;
+      color: white;
+      font-size: 16px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background: #3b4353;
+    }
+
+    button:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+    }
+
+    .battle-log {
+      margin-top: 20px;
+      background: #171b24;
+      border: 1px solid #343b4b;
+      border-radius: 15px;
+      padding: 15px;
+      min-height: 150px;
+    }
+
+    .battle-log h2 {
+      margin-top: 0;
+      color: #ffd54a;
+    }
+
+    #log {
+      max-height: 180px;
+      overflow-y: auto;
+    }
+
+    .log-line {
+      padding: 5px 0;
+      border-bottom: 1px solid #292f39;
+    }
+
+    @media (max-width: 650px) {
+      .cards {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+  <div class="game">
+
+    <h1>⚔️ Reino de Aether</h1>
+
+    <p class="subtitle">
+      Derrote inimigos, ganhe XP e fique cada vez mais forte!
+    </p>
+
+    <div class="cards">
+
+      <!-- JOGADOR -->
+      <div class="card player">
+
+        <h2>🧙 Seu Herói</h2>
+
+        <p>
+          Nível:
+          <strong id="level">1</strong>
+        </p>
+
+        <p>
+          ❤️ Vida:
+          <strong>
+            <span id="hp">100</span> /
+            <span id="maxHp">100</span>
+          </strong>
+        </p>
+
+        <div class="bar">
+          <div id="hpBar" class="bar-fill"></div>
+        </div>
+
+        <div class="stats">
+
+          <div class="stat">
+            ⚔️ Ataque:
+            <strong id="attackPower">10</strong>
+          </div>
+
+          <div class="stat">
+            ⭐ XP:
+            <strong>
+              <span id="xp">0</span> /
+              <span id="xpNeeded">100</span>
+            </strong>
+          </div>
+
+          <div class="stat">
+            💰 Moedas:
+            <strong id="coins">0</strong>
+          </div>
+
+          <div class="stat">
+            🏆 Nível:
+            <strong id="level2">1</strong>
+          </div>
+
+        </div>
+
+      </div>
+
+
+      <!-- INIMIGO -->
+      <div class="card enemy">
+
+        <h2>👹 Inimigo</h2>
+
+        <h3 id="enemyName">Slime</h3>
+
+        <p>
+          ❤️ Vida:
+          <strong>
+            <span id="enemyHp">45</span> /
+            <span id="enemyMaxHp">45</span>
+          </strong>
+        </p>
+
+        <div class="bar">
+          <div id="enemyBar" class="bar-fill"></div>
+        </div>
+
+        <p>
+          ⚔️ Ataque:
+          <strong id="enemyAttack">7</strong>
+        </p>
+
+        <p>
+          ⭐ XP:
+          <strong id="enemyXp">12</strong>
+        </p>
+
+      </div>
+
+    </div>
+
+
+    <!-- BOTÕES -->
+
+    <div class="actions">
+
+      <button id="attackButton">
+        ⚔️ ATACAR
+      </button>
+
+      <button id="healButton">
+        🧪 CURAR
+      </button>
+
+      <button id="newEnemyButton">
+        👹 NOVO INIMIGO
+      </button>
+
+      <button id="resetButton">
+        🔄 REINICIAR
+      </button>
+
+    </div>
+
+
+    <!-- LOG -->
+
+    <div class="battle-log">
+
+      <h2>📜 Batalha</h2>
+
+      <div id="log"></div>
+
+    </div>
+
+  </div>
+
+
+  <script>
+
+    // =========================
+    // DADOS DO JOGADOR
+    // =========================
+
+    let player = {
+      level: 1,
+      hp: 100,
+      maxHp: 100,
+      attack: 10,
+      xp: 0,
+      xpNeeded: 100,
+      coins: 0
+    };
+
+
+    // =========================
+    // TIPOS DE INIMIGOS
+    // =========================
+
+    const enemies = [
+
+      {
+        name: "Slime",
+        hp: 45,
+        attack: 7,
+        xp: 12
+      },
+
+      {
+        name: "Goblin",
+        hp: 65,
+        attack: 10,
+        xp: 18
+      },
+
+      {
+        name: "Lobo Sombrio",
+        hp: 85,
+        attack: 13,
+        xp: 25
+      },
+
+      {
+        name: "Orc",
+        hp: 120,
+        attack: 17,
+        xp: 35
+      },
+
+      {
+        name: "Dragão Jovem",
+        hp: 180,
+        attack: 24,
+        xp: 60
+      }
+
+    ];
+
+
+    let enemy;
+
+
+    // =========================
+    // ELEMENTOS HTML
+    // =========================
+
+    const level = document.getElementById("level");
+    const level2 = document.getElementById("level2");
+
+    const hp = document.getElementById("hp");
+    const maxHp = document.getElementById("maxHp");
+    const hpBar = document.getElementById("hpBar");
+
+    const attackPower =
+      document.getElementById("attackPower");
+
+    const xp = document.getElementById("xp");
+    const xpNeeded =
+      document.getElementById("xpNeeded");
+
+    const coins =
+      document.getElementById("coins");
+
+    const enemyName =
+      document.getElementById("enemyName");
+
+    const enemyHp =
+      document.getElementById("enemyHp");
+
+    const enemyMaxHp =
+      document.getElementById("enemyMaxHp");
+
+    const enemyBar =
+      document.getElementById("enemyBar");
+
+    const enemyAttack =
+      document.getElementById("enemyAttack");
+
+    const enemyXp =
+      document.getElementById("enemyXp");
+
+    const log =
+      document.getElementById("log");
+
+    const attackButton =
+      document.getElementById("attackButton");
+
+    const healButton =
+      document.getElementById("healButton");
+
+    const newEnemyButton =
+      document.getElementById("newEnemyButton");
+
+    const resetButton =
+      document.getElementById("resetButton");
+
+
+    // =========================
+    // ESCOLHER INIMIGO
+    // =========================
+
+    function createEnemy() {
+
+      const random =
+        Math.floor(Math.random() * enemies.length);
+
+      const selected =
+        enemies[random];
+
+      enemy = {
+        name: selected.name,
+        hp: selected.hp,
+        maxHp: selected.hp,
+        attack: selected.attack,
+        xp: selected.xp
+      };
+
+      updateScreen();
+
+      addLog(
+        "👹 Um " +
+        enemy.name +
+        " apareceu!"
+      );
+    }
+
+
+    // =========================
+    // ATUALIZAR TELA
+    // =========================
+
+    function updateScreen() {
+
+      level.textContent =
+        player.level;
+
+      level2.textContent =
+        player.level;
+
+      hp.textContent =
+        player.hp;
+
+      maxHp.textContent =
+        player.maxHp;
+
+      attackPower.textContent =
+        player.attack;
+
+      xp.textContent =
+        player.xp;
+
+      xpNeeded.textContent =
+        player.xpNeeded;
+
+      coins.textContent =
+        player.coins;
+
+
+      // VIDA DO JOGADOR
+
+      let hpPercent =
+        (player.hp / player.maxHp) * 100;
+
+      hpPercent =
+        Math.max(0, Math.min(100, hpPercent));
+
+      hpBar.style.width =
+        hpPercent + "%";
+
+
+      // INIMIGO
+
+      enemyName.textContent =
+        enemy.name;
+
+      enemyHp.textContent =
+        enemy.hp;
+
+      enemyMaxHp.textContent =
+        enemy.maxHp;
+
+      enemyAttack.textContent =
+        enemy.attack;
+
+      enemyXp.textContent =
+        enemy.xp;
+
+
+      let enemyPercent =
+        (enemy.hp / enemy.maxHp) * 100;
+
+      enemyPercent =
+        Math.max(
+          0,
+          Math.min(100, enemyPercent)
+        );
+
+      enemyBar.style.width =
+        enemyPercent + "%";
+
+
+      // BOTÕES
+
+      attackButton.disabled =
+        player.hp <= 0 ||
+        enemy.hp <= 0;
+
+      healButton.disabled =
+        player.hp <= 0 ||
+        player.hp >= player.maxHp;
+
+    }
+
+
+    // =========================
+    // LOG DA BATALHA
+    // =========================
+
+    function addLog(message) {
+
+      const line =
+        document.createElement("div");
+
+      line.className =
+        "log-line";
+
+      line.textContent =
+        message;
+
+      log.prepend(line);
+
+    }
+
+
+    // =========================
+    // ATAQUE
+    // =========================
+
+    attackButton.addEventListener(
+      "click",
+      function() {
+
+        if (
+          player.hp <= 0 ||
+          enemy.hp <= 0
+        ) {
+          return;
+        }
+
+
+        // DANO DO JOGADOR
+
+        const damage =
+          player.attack +
+          Math.floor(Math.random() * 6);
+
+        enemy.hp =
+          Math.max(
+            0,
+            enemy.hp - damage
+          );
+
+
+        addLog(
+          "⚔️ Você causou " +
+          damage +
+          " de dano!"
+        );
+
+
+        // INIMIGO MORRE
+
+        if (enemy.hp <= 0) {
+
+          player.xp += enemy.xp;
+
+          const earnedCoins =
+            Math.floor(enemy.maxHp / 5);
+
+          player.coins +=
+            earnedCoins;
+
+
+          addLog(
+            "🏆 Você derrotou " +
+            enemy.name +
+            "!"
+          );
+
+          addLog(
+            "⭐ +" +
+            enemy.xp +
+            " XP"
+          );
+
+          addLog(
+            "💰 +" +
+            earnedCoins +
+            " moedas"
+          );
+
+
+          checkLevelUp();
+
+          updateScreen();
+
+
+          setTimeout(
+            createEnemy,
+            600
+          );
+
+          return;
+        }
+
+
+        // CONTRA-ATAQUE
+
+        const enemyDamage =
+          enemy.attack +
+          Math.floor(Math.random() * 5);
+
+        player.hp =
+          Math.max(
+            0,
+            player.hp - enemyDamage
+          );
+
+
+        addLog(
+          "💥 " +
+          enemy.name +
+          " causou " +
+          enemyDamage +
+          " de dano!"
+        );
+
+
+        if (player.hp <= 0) {
+
+          addLog(
+            "💀 Você foi derrotado!"
+          );
+
+          addLog(
+            "🔄 Clique em REINICIAR para tentar novamente."
+          );
+
+        }
+
+
+        updateScreen();
+
+      }
+    );
+
+
+    // =========================
+    // CURAR
+    // =========================
+
+    healButton.addEventListener(
+      "click",
+      function() {
+
+        if (
+          player.hp <= 0 ||
+          player.hp >= player.maxHp
+        ) {
+          return;
+        }
+
+
+        const healAmount =
+          Math.min(
+            25,
+            player.maxHp - player.hp
+          );
+
+
+        player.hp +=
+          healAmount;
+
+
+        addLog(
+          "🧪 Você recuperou " +
+          healAmount +
+          " de vida!"
+        );
+
+
+        // INIMIGO ATACA
+
+        if (enemy.hp > 0) {
+
+          const damage =
+            Math.max(
+              1,
+              enemy.attack - 2
+            );
+
+          player.hp =
+            Math.max(
+              0,
+              player.hp - damage
+            );
+
+          addLog(
+            "💥 O inimigo aproveitou e causou " +
+            damage +
+            " de dano!"
+          );
+
+        }
+
+
+        updateScreen();
+
+      }
+    );
+
+
+    // =========================
+    // NOVO INIMIGO
+    // =========================
+
+    newEnemyButton.addEventListener(
+      "click",
+      function() {
+
+        createEnemy();
+
+      }
+    );
+
+
+    // =========================
+    // SUBIR DE NÍVEL
+    // =========================
+
+    function checkLevelUp() {
+
+      while (
+        player.xp >=
+        player.xpNeeded
+      ) {
+
+        player.xp -=
+          player.xpNeeded;
+
+
+        player.level++;
+
+
+        player.xpNeeded =
+          Math.floor(
+            player.xpNeeded * 1.35
+          );
+
+
+        player.attack += 4;
+
+        player.maxHp += 20;
+
+        player.hp =
+          player.maxHp;
+
+
+        addLog(
+          "🎉 LEVEL UP!"
+        );
+
+        addLog(
+          "🔥 Você chegou ao nível " +
+          player.level +
+          "!"
+        );
+
+        addLog(
+          "⚔️ Seu ataque aumentou!"
+        );
+
+        addLog(
+          "❤️ Sua vida máxima aumentou!"
+        );
+
+      }
+
+    }
+
+
+    // =========================
+    // REINICIAR
+    // =========================
+
+    resetButton.addEventListener(
+      "click",
+      function() {
+
+        player = {
+          level: 1,
+          hp: 100,
+          maxHp: 100,
+          attack: 10,
+          xp: 0,
+          xpNeeded: 100,
+          coins: 0
+        };
+
+
+        log.innerHTML = "";
+
+
+        addLog(
+          "🔄 Novo jogo iniciado!"
+        );
+
+
+        createEnemy();
+
+      }
+    );
+
+
+    // =========================
+    // INICIAR JOGO
+    // =========================
+
+    createEnemy();
+
+    addLog(
+      "🌲 Você entrou no Reino de Aether!"
+    );
+
+  </script>
+
+</body>
+</html>
